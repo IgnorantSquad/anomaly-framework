@@ -87,7 +87,7 @@ namespace Anomaly
 
 
 #if UNITY_EDITOR
-        public virtual void OnInspectorGUI(UnityEditor.Editor editor, UnityEditor.SerializedObject serializedObject)
+        public virtual void OnInspectorGUI(UnityEditor.Editor editor, UnityEditor.SerializedObject serializedObject, UnityEditor.SerializedProperty targetProperty)
         {
 
         }
@@ -109,7 +109,7 @@ namespace Anomaly.Editor
             base.OnInspectorGUI();
 
             EditorGUI.BeginChangeCheck();
-            (target as CustomBehaviour).OnInspectorGUI(this, serializedObject);
+            (target as CustomBehaviour).OnInspectorGUI(this, serializedObject, null);
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
