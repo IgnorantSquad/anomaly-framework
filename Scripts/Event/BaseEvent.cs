@@ -1,18 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Anomaly
+namespace Anomaly 
 {
+    public class EventParam
+    {
+        public GameObject sender, receiver;
+
+        public bool IsValid()
+        {
+            return !ReferenceEquals(sender, null) && !ReferenceEquals(receiver, null);
+        }
+    }
+
+
     public abstract class BaseEvent
     {
-        protected Actor sender, receiver;
-        public BaseEvent(Actor sender, Actor receiver)
-        {
-            this.sender = sender;
-            this.receiver = receiver;
-        }
-
-        public abstract void Invoke();
+        public abstract void Invoke(EventParam param);
     }
 }
