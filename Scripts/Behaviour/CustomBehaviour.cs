@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -6,33 +7,43 @@ namespace Anomaly
 {
     public class CustomBehaviour : MonoBehaviour
     {
-        GameObject _gameObject = null;
-        new public GameObject gameObject
-        {
-            get
-            {
-                if (_gameObject == null) return base.gameObject;
-                return _gameObject;
-            }
-        }
+        // GameObject _gameObject = null;
+        // new public GameObject gameObject
+        // {
+        //     get
+        //     {
+        //         if (_gameObject == null) return base.gameObject;
+        //         return _gameObject;
+        //     }
+        // }
 
-        Transform _transform = null;
-        new public Transform transform
-        {
-            get
-            {
-                if (_transform == null) return base.transform;
-                return _transform;
-            }
-        }
+        // Transform _transform = null;
+        // new public Transform transform
+        // {
+        //     get
+        //     {
+        //         if (_transform == null) return base.transform;
+        //         return _transform;
+        //     }
+        // }
 
 
-        void Awake()
+        private HashSet<Type> sharedComponents = new HashSet<Type>();
+        private Dictionary<Type, CustomComponent.BaseData> componentsData = new Dictionary<Type, CustomComponent.BaseData>();
+
+
+        protected virtual void Awake()
         {
             Initialize();
         }
 
         protected virtual void Initialize()
+        {
+            InitializeMagicFunc();
+            InitializeComponents(this.GetType());
+        }
+
+        public void InitializeMagicFunc()
         {
             MethodInfo GetMethod(string methodName)
             {
@@ -55,8 +66,8 @@ namespace Anomaly
                     && method.ReturnType == typeof(void);
             }
 
-            _gameObject = base.gameObject;
-            _transform = base.transform;
+            // _gameObject = base.gameObject;
+            // _transform = base.transform;
 
             var self = this;
 
@@ -76,47 +87,48 @@ namespace Anomaly
                 UpdateManager.Register(this, method, methodList[i].Item2);
             }
         }
-
-        protected void InitializeComponent(params CustomComponent[] components)
+        public void InitializeComponents(params CustomComponent.BaseData[] data)
         {
-            for (int i = 0; i < components.Length; ++i)
+            for (int i = 0; i < data.Length; ++i)
             {
-                components[i].Initialize(this);
+                componentsData.Add(data[i].GetType(), data[i]);
+                var attribute = Attribute.GetCustomAttribute(data[i].GetType(), typeof(SharedComponentDataAttribute)) as SharedComponentDataAttribute;
+                sharedComponents.Add(attribute.OuterType);
+            }
+        }
+
+        public void InitializeComponents(System.Type targetType)
+        {
+            var fields = targetType.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            foreach (var field in fields)
+            {
+                if (!field.FieldType.IsSubclassOf(typeof(CustomComponent.BaseData))) continue;
+
+                if (componentsData.ContainsKey(field.FieldType)) continue;
+
+                var attribute = Attribute.GetCustomAttribute(field.FieldType, typeof(SharedComponentDataAttribute)) as SharedComponentDataAttribute;
+                if (attribute == null)
+                {
+                    Debug.LogError($"Wrong Data Format!! You must add SharedComponentData attribute. See {field.FieldType}.");
+                    continue;
+                }
+
+                componentsData.Add(field.FieldType, field.GetValue(this) as CustomComponent.BaseData);
+                sharedComponents.Add(attribute.OuterType);
             }
         }
 
 
-#if UNITY_EDITOR
-        public virtual void OnInspectorGUI(UnityEditor.Editor editor, UnityEditor.SerializedObject serializedObject, UnityEditor.SerializedProperty targetProperty)
+        public T GetComponentData<T>() where T : CustomComponent.BaseData
         {
-
+            if (!componentsData.ContainsKey(typeof(T))) throw new System.Exception("Wrong ComponentData Access");
+            return componentsData[typeof(T)] as T;
         }
-#endif
-    }
-}
 
-
-#if UNITY_EDITOR
-namespace Anomaly.Editor
-{
-    using UnityEditor;
-
-    [CustomEditor(typeof(CustomBehaviour), true)]
-    public class CustomObjectEditor : Editor
-    {
-        public override void OnInspectorGUI()
+        public T GetSharedComponent<T>() where T : CustomComponent, new()
         {
-            base.OnInspectorGUI();
-
-            EditorGUI.BeginChangeCheck();
-            (target as CustomBehaviour).OnInspectorGUI(this, serializedObject, null);
-            if (EditorGUI.EndChangeCheck())
-            {
-                serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(target);
-                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty((target as CustomBehaviour).gameObject.scene);
-            }
+            if (!sharedComponents.Contains(typeof(T))) throw new System.Exception("Wrong Component Access");
+            return ComponentPool.Get<T>();
         }
     }
 }
-#endif
