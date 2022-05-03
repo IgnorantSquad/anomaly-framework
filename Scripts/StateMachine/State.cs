@@ -16,11 +16,14 @@ namespace Anomaly
 
         public abstract Identity ID { get; }
 
-        public abstract void OnEnter(CustomBehaviour target);
-        public abstract void OnExit(CustomBehaviour target);
-        public abstract void OnFixedUpdate(CustomBehaviour target);
-        public abstract void OnUpdate(CustomBehaviour target);
-        public abstract void OnLateUpdate(CustomBehaviour target);
+        public abstract void OnEnter(CustomObject target);
+        public abstract void OnExit(CustomObject target);
+
+        public abstract bool IsTransition(out Identity next);
+
+        public abstract void OnFixedUpdate(CustomObject target);
+        public abstract void OnUpdate(CustomObject target);
+        public abstract void OnLateUpdate(CustomObject target);
 
         public static State New<T>() where T : State, new()
         {

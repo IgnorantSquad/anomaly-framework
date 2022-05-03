@@ -1,16 +1,16 @@
 #if UNITY_EDITOR
 
-namespace Anomaly.Editor 
+namespace Anomaly.Editor
 {
     using System;
     using UnityEngine;
     using UnityEditor;
     using System.Collections.Generic;
 
-    [CustomEditor(typeof(CustomBehaviour), true)]
-    public class CustomBehaviourEditor : Editor
+    [CustomEditor(typeof(CustomObject), true)]
+    public class CustomObjectEditor : Editor
     {
-        private CustomBehaviour self = null;
+        private CustomObject self = null;
         private Dictionary<string, bool> editorFold = new Dictionary<string, bool>();
 
         private List<System.Reflection.FieldInfo> serializedFields = new List<System.Reflection.FieldInfo>();
@@ -26,7 +26,7 @@ namespace Anomaly.Editor
 
         private void OnEnable()
         {
-            self = target as CustomBehaviour;
+            self = target as CustomObject;
             self.InitializeComponents(target.GetType());
 
 
