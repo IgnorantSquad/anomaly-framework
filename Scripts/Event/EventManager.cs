@@ -3,22 +3,14 @@ using UnityEngine;
 
 namespace Anomaly
 {
-    public class Interactor : MonoBehaviour
+    public class EventManager : MonoBehaviour
     {
-        private static Interactor instance = null;
-        
         private Queue<(BaseEvent targetEvent, EventParam param)> eventQueue = new Queue<(BaseEvent, EventParam)>();
 
-        public static void AddEvent(BaseEvent e, EventParam p)
-        {
-            instance.eventQueue.Enqueue((e, p));
-        }
 
-
-        private void Awake() 
+        public void AddEvent(BaseEvent e, EventParam p)
         {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
+            eventQueue.Enqueue((e, p));
         }
 
         private void Update()

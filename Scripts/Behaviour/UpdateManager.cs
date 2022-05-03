@@ -1,101 +1,59 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
+using System;
+using UnityEngine;
 
 namespace Anomaly
 {
-
-    public static class UpdateManager
+    public class UpdateManager : MonoBehaviour
     {
-        static Dictionary<EFunctionType, CustomList<CustomMethodBinder>> objectList = new Dictionary<EFunctionType, CustomList<CustomMethodBinder>>(new FunctionTypeExt());
+        private List<(CustomBehaviour target, Action method)> fixedUpdateObjectList = new List<(CustomBehaviour, Action)>();
+        private List<(CustomBehaviour target, Action method)> updateObjectList = new List<(CustomBehaviour, Action)>();
+        private List<(CustomBehaviour target, Action method)> lateUpdateObjectList = new List<(CustomBehaviour, Action)>();
 
-        #region For FunctionType
-        public enum EFunctionType : int
+        public void RegisterFixedUpdate(CustomBehaviour target, System.Action action)
         {
-            FIXEDUPDATE,
-            FIXEDUPDATE_ISO,
-            UPDATE,
-            UPDATE_ISO,
-            LATEUPDATE,
-            LATEUPDATE_ISO
+            fixedUpdateObjectList.Add((target, action));
+        }
+        public void RegisterUpdate(CustomBehaviour target, System.Action action)
+        {
+            updateObjectList.Add((target, action));
+        }
+        public void RegisterLateUpdate(CustomBehaviour target, System.Action action)
+        {
+            lateUpdateObjectList.Add((target, action));
         }
 
-        public struct FunctionTypeExt : IEqualityComparer<EFunctionType>
+
+        void FixedUpdate()
         {
-            public bool Equals(EFunctionType a, EFunctionType b)
+            UpdateLoop(fixedUpdateObjectList);
+        }
+
+        void Update()
+        {
+            UpdateLoop(updateObjectList);
+        }
+
+        void LateUpdate()
+        {
+            UpdateLoop(lateUpdateObjectList);
+        }
+
+        private void UpdateLoop(List<(CustomBehaviour target, System.Action method)> list)
+        {
+            for (int i = 0; i < list.Count; ++i)
             {
-                return a == b;
-            }
-
-            public int GetHashCode(EFunctionType f)
-            {
-                return (int)f;
-            }
-        }
-
-        public class CustomMethodBinder
-        {
-            public CustomBehaviour target;
-            public MethodInfo method;
-            public bool Invoke(params object[] pl)
-            {
-                if (target == null || method == null) return true;
-                method.Invoke(target, pl);
-                return false;
-            }
-        }
-        #endregion
-
-        public static void Register(CustomBehaviour obj, MethodInfo m, EFunctionType type)
-        {
-            if (obj == null) return;
-            if (!objectList.ContainsKey(type)) objectList.Add(type, CustomList<CustomMethodBinder>.Create(new CustomMethodBinder() { target = obj, method = m }));
-            else objectList[type].Add(new CustomMethodBinder() { target = obj, method = m });
-        }
-
-
-        static bool IsNull(EFunctionType type, CustomList<CustomMethodBinder> target)
-        {
-            if (!objectList.ContainsKey(type)) return true;
-            return false;
-        }
-
-
-        public static void FixedUpdate()
-        {
-            UpdateLoop(EFunctionType.FIXEDUPDATE, false);
-            UpdateLoop(EFunctionType.FIXEDUPDATE_ISO, true);
-        }
-
-        public static void Update()
-        {
-            UpdateLoop(EFunctionType.UPDATE, false);
-            UpdateLoop(EFunctionType.UPDATE_ISO, true);
-        }
-
-        public static void LateUpdate()
-        {
-            UpdateLoop(EFunctionType.LATEUPDATE, false);
-            UpdateLoop(EFunctionType.LATEUPDATE_ISO, true);
-        }
-
-        static void UpdateLoop(EFunctionType type, bool isIsolated)
-        {
-            CustomList<CustomMethodBinder> search = objectList.ContainsKey(type) ? objectList[type] : null;
-            while (search != null)
-            {
-                //if (IsNull(type, search)) continue;
-
-                var target = search.data;
-
-                if (target.target.gameObject.activeInHierarchy == false && !isIsolated)
+                var current = list[i];
+                if (current.target == null)
                 {
-                    search = search.next;
+                    list.RemoveAt(i);
                     continue;
                 }
-
-                target.Invoke();
-
-                search = search.next;
+                if (!current.target.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+                current.method.Invoke();
             }
         }
     }

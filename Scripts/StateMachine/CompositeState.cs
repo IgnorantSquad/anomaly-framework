@@ -16,7 +16,7 @@ namespace Anomaly
         }
 
 
-        public override void OnEnter(CustomBehaviour target)
+        public override void OnEnter(CustomObject target)
         {
             for (int i = 0; i < states.Count; ++i)
             {
@@ -24,7 +24,7 @@ namespace Anomaly
             }
         }
 
-        public override void OnExit(CustomBehaviour target)
+        public override void OnExit(CustomObject target)
         {
             for (int i = 0; i < states.Count; ++i)
             {
@@ -32,7 +32,19 @@ namespace Anomaly
             }
         }
 
-        public override void OnFixedUpdate(CustomBehaviour target)
+
+        public override bool IsTransition(out Identity next)
+        {
+            next = Identity.None;
+            for (int i = 0; i < states.Count; ++i)
+            {
+                if (states[i].IsTransition(out next)) return true;
+            }
+            return false;
+        }
+
+
+        public override void OnFixedUpdate(CustomObject target)
         {
             for (int i = 0; i < states.Count; ++i)
             {
@@ -40,7 +52,7 @@ namespace Anomaly
             }
         }
 
-        public override void OnLateUpdate(CustomBehaviour target)
+        public override void OnLateUpdate(CustomObject target)
         {
             for (int i = 0; i < states.Count; ++i)
             {
@@ -48,7 +60,7 @@ namespace Anomaly
             }
         }
 
-        public override void OnUpdate(CustomBehaviour target)
+        public override void OnUpdate(CustomObject target)
         {
             for (int i = 0; i < states.Count; ++i)
             {
