@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Anomaly.Utils
@@ -11,15 +10,8 @@ namespace Anomaly.Utils
         public SerializableDictionary() { }
         public SerializableDictionary(string defaultKey, _Typ defaultValue = default(_Typ))
         {
-            keyList.Add(defaultKey);
-            valueList.Add(defaultValue);
-            OnAfterDeserialize();
-        }
-        public SerializableDictionary(IEnumerable<string> defaultKeys, IEnumerable<_Typ> defaultValues = null)
-        {
-            Debug.Assert(defaultKeys.Count() == defaultValues.Count());
-            keyList.AddRange(defaultKeys);
-            valueList.AddRange(defaultValues);
+            keyList = new string[] { defaultKey };
+            valueList = new _Typ[] { defaultValue };
             OnAfterDeserialize();
         }
         #endregion
@@ -33,87 +25,186 @@ namespace Anomaly.Utils
         }
 
         #region Serialization
-        [SerializeField]
-        private List<string> keyList = new List<string>();
-        [SerializeField]
-        private List<_Typ> valueList = new List<_Typ>();
+        [SerializeField] private string[] keyList;
+        [SerializeField] private _Typ[] valueList;
 
         public void OnAfterDeserialize()
         {
             Container.Clear();
-            for (int i = 0; i < keyList.Count; ++i)
+
+            for (int i = 0; i < Mathf.Min(keyList.Length, valueList.Length); ++i)
             {
+                // Avoid conflict
                 if (Container.ContainsKey(keyList[i]))
                 {
                     keyList[i] = System.Guid.NewGuid().ToString();
                 }
                 Container.Add(keyList[i], valueList[i]);
             }
+
             keyList = null;
             valueList = null;
         }
         public void OnBeforeSerialize()
         {
-            keyList = Container.Keys.ToList();
-            valueList = Container.Values.ToList();
+            keyList = new string[Container.Keys.Count];
+            valueList = new _Typ[Container.Values.Count];
+
+            Container.Keys.CopyTo(keyList, 0);
+            Container.Values.CopyTo(valueList, 0);
         }
         #endregion
     }
+
+    public class AnimationEventDictionary
+    {
+
+    }
 }
-
-
 
 #if UNITY_EDITOR
 namespace Anomaly.Utils
 {
     using UnityEditor;
 
-    public partial class SerializableDictionary<_Typ>
+    public abstract class SerializableDictionaryDrawer : PropertyDrawer
     {
-        public void OnInspectorGUI(Editor editor, SerializedProperty target, string fieldName)
+        private SerializedProperty keyList, valueList;
+        private int dictionarySize = 0;
+        private bool foldout = false;
+
+        protected virtual string KeyLabel => "Key";
+        protected virtual string ValueLabel => "Value";
+
+        protected abstract float Margin { get; }
+
+        private void Initialize(SerializedProperty property)
         {
-            OnBeforeSerialize();
+            keyList = property.FindPropertyRelative("keyList");
+            valueList = property.FindPropertyRelative("valueList");
 
-            EditorGUILayout.BeginVertical("box");
+            dictionarySize = Mathf.Min(keyList.arraySize, valueList.arraySize);
+        }
 
-            var keyProperty = target.FindPropertyRelative(nameof(keyList));
-            var valueProperty = target.FindPropertyRelative(nameof(valueList));
+        private Rect Display(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var rect = position;
 
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(fieldName);
-            if (GUILayout.Button("+", GUILayout.Width(40)))
+            rect.x += 10F;
+            rect.size = new Vector2(GUI.skin.label.CalcSize(label).x + 10F, 18F);
+
+            foldout = EditorGUI.BeginFoldoutHeaderGroup(rect, foldout, label);
+
+            if (!foldout)
             {
-                keyProperty.arraySize++;
-                keyProperty.GetArrayElementAtIndex(keyProperty.arraySize - 1).stringValue = System.Guid.NewGuid().ToString();
-                valueProperty.arraySize++;
-            }
-            EditorGUILayout.EndHorizontal();
-
-            for (int i = 0; i < keyProperty.arraySize; ++i)
-            {
-                EditorGUILayout.BeginHorizontal();
-
-                EditorGUILayout.PropertyField(keyProperty.GetArrayElementAtIndex(i), new GUIContent(""), GUILayout.Width(120));
-                GUILayout.Space(5);
-                EditorGUILayout.PropertyField(valueProperty.GetArrayElementAtIndex(i), new GUIContent(""));
-
-                GUILayout.Space(40);
-
-                Color prevColor = GUI.backgroundColor;
-                GUI.backgroundColor = Color.red;
-                if (GUILayout.Button("-", GUILayout.Width(40)))
-                {
-                    keyProperty.DeleteArrayElementAtIndex(i);
-                    valueProperty.DeleteArrayElementAtIndex(i);
-                    break;
-                }
-                GUI.backgroundColor = prevColor;
-
-                EditorGUILayout.EndHorizontal();
+                EditorGUI.EndFoldoutHeaderGroup();
+                return rect;
             }
 
-            EditorGUILayout.EndVertical();
+            rect = DisplayAddButton(rect, position);
+
+            rect = DisplayDictionary(rect, position);
+
+            EditorGUI.EndFoldoutHeaderGroup();
+            return rect;
+        }
+
+        private Rect DisplayAddButton(Rect rect, Rect origin)
+        {
+            rect.position = new Vector2(origin.x + origin.width * 0.8f - 50F, rect.y);
+            rect.size = new Vector2(80F, 20F);
+
+            if (GUI.Button(rect, "Add"))
+            {
+                keyList.arraySize++;
+                valueList.arraySize++;
+            }
+
+            rect.y += 23F;
+
+            return rect;
+        }
+
+        private Rect DisplayDictionary(Rect rect, Rect origin)
+        {
+            for (int i = 0; i < dictionarySize; ++i)
+            {
+                int cachedIndex = i;
+                rect = DispalyElement(rect, origin, cachedIndex);
+                dictionarySize = Mathf.Min(keyList.arraySize, valueList.arraySize);
+            }
+
+            return rect;
+        }
+
+        private Rect DispalyElement(Rect rect, Rect origin, int index)
+        {
+            rect.x = origin.x + 30F;
+            rect.size = new Vector2(70F, 18F);
+            if (!string.IsNullOrEmpty(KeyLabel)) GUI.Label(rect, KeyLabel);
+
+            rect.x += 70F - 9 * EditorGUI.indentLevel;
+            rect.width = origin.width * 0.8f - 70F;
+            EditorGUI.PropertyField(rect, keyList.GetArrayElementAtIndex(index), GUIContent.none);
+
+            rect.x += origin.width * 0.8f - 62.5f;
+            rect.size = Vector2.one * 20F;
+            if (GUI.Button(rect, "x"))
+            {
+                keyList.DeleteArrayElementAtIndex(index);
+                valueList.DeleteArrayElementAtIndex(index);
+                return rect;
+            }
+
+            rect.position = new Vector2(origin.x + 30F, rect.y + 22.5f);
+            rect.size = new Vector2(70F, 18F);
+            if (!string.IsNullOrEmpty(ValueLabel)) GUI.Label(rect, ValueLabel);
+
+            rect.x += !string.IsNullOrEmpty(ValueLabel) ? 70F - 9 * EditorGUI.indentLevel : 0F;
+            rect.width = !string.IsNullOrEmpty(ValueLabel) ? origin.width * 0.8f - 70F : origin.width * 0.8f;
+            EditorGUI.PropertyField(rect, valueList.GetArrayElementAtIndex(index), GUIContent.none);
+
+            rect.y += Margin;
+
+            return rect;
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+
+            Initialize(property);
+
+            Display(EditorGUI.IndentedRect(position), property, label);
+
+            EditorGUI.EndProperty();
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return dictionarySize == 0 || !foldout ? 18F : (Margin + 22.5f) * dictionarySize + 20F;
         }
     }
+
+    [CustomPropertyDrawer(typeof(SerializableDictionary<AnimationEventCallback>))]
+    public class SerializableDictionaryEventDrawer : SerializableDictionaryDrawer
+    {
+        protected override string KeyLabel => "Function";
+        protected override string ValueLabel => string.Empty;
+
+        protected override float Margin => 110F;
+    }
+
+    [CustomPropertyDrawer(typeof(SerializableDictionary<int>))]
+    [CustomPropertyDrawer(typeof(SerializableDictionary<float>))]
+    [CustomPropertyDrawer(typeof(SerializableDictionary<bool>))]
+    [CustomPropertyDrawer(typeof(SerializableDictionary<string>))]
+    public partial class SerializableDictionaryValueDrawer : SerializableDictionaryDrawer
+    {
+        protected override float Margin => 38F;
+    }
+
+
+    public partial class SerializableDictionaryValueDrawer { }
 }
 #endif

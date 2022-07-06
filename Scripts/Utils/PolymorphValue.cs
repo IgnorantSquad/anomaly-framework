@@ -29,24 +29,24 @@ namespace Anomaly.Utils
     {
         public void OnInspectorGUI(Editor editor, SerializedProperty target, string fieldName)
         {
-            GUILayout.BeginVertical("box");
+            // GUILayout.BeginVertical("box");
 
-            GUILayout.BeginHorizontal("box");
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(fieldName);
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+            // GUILayout.BeginHorizontal("box");
+            // GUILayout.FlexibleSpace();
+            // GUILayout.Label(fieldName);
+            // GUILayout.FlexibleSpace();
+            // GUILayout.EndHorizontal();
 
-            GUILayout.Space(5);
+            // GUILayout.Space(5);
 
-            GUILayout.BeginVertical("box");
+            // GUILayout.BeginVertical("box");
 
-            EditorGUILayout.PropertyField(target.FindPropertyRelative(nameof(defaultValue)), new GUIContent("Default"));
-            otherValues.OnInspectorGUI(editor, target.FindPropertyRelative(nameof(otherValues)), "Others");
+            // EditorGUILayout.PropertyField(target.FindPropertyRelative(nameof(defaultValue)), new GUIContent("Default"));
+            // otherValues.OnInspectorGUI(editor, target.FindPropertyRelative(nameof(otherValues)), "Others");
 
-            GUILayout.EndVertical();
+            // GUILayout.EndVertical();
 
-            GUILayout.EndVertical();
+            // GUILayout.EndVertical();
         }
     }
 }
