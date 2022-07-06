@@ -5,17 +5,27 @@ using UnityEngine;
 namespace Anomaly.Utils
 {
     [System.Serializable]
-    public partial class FlexibleValue
+    public class FlexibleValue
     {
-        [SerializeField]
-        private float defaultValue = default(float);
+        [SerializeField] private float defaultValue = default(float);
 
-        private float additionValue = default(float);
-        private float multiplierValue = default(float);
-        private float finalAdditionValue = default(float);
-        private float finalMultiplierValue = default(float);
+        [SerializeField] private float minValue = Mathf.NegativeInfinity, maxValue = Mathf.Infinity;
+        [SerializeField] private bool hasRange = false;
 
-        public float Value => (defaultValue * multiplierValue + additionValue) * finalMultiplierValue + finalAdditionValue;
+
+        public float Addition { get; set; } = 0F;
+        public float Multiplier { get; set; } = 1F;
+        public float FinalAddition { get; set; } = 0F;
+        public float FinalMultiplier { get; set; } = 1F;
+
+        public float Value
+        {
+            get
+            {
+                float value = (defaultValue * Multiplier + Addition) * FinalMultiplier + FinalAddition;
+                return hasRange ? Mathf.Clamp(value, minValue, maxValue) : value;
+            }
+        }
     }
 }
 
@@ -26,27 +36,63 @@ namespace Anomaly.Utils
 {
     using UnityEditor;
 
-    public partial class FlexibleValue
+    [CustomPropertyDrawer(typeof(FlexibleValue))]
+    public class FlexibleValueDrawer : PropertyDrawer
     {
-        public void OnInspectorGUI(string fieldName)
+        private SerializedProperty defaultValue, hasRange, minValue, maxValue;
+
+        private bool rangeFoldout = false;
+
+        private void Initialize(SerializedProperty property)
         {
-            GUILayout.BeginHorizontal("box");
+            defaultValue = property.FindPropertyRelative(nameof(defaultValue));
+            hasRange = property.FindPropertyRelative(nameof(hasRange));
+            minValue = property.FindPropertyRelative(nameof(minValue));
+            maxValue = property.FindPropertyRelative(nameof(maxValue));
 
-            GUILayout.BeginHorizontal("box");
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(fieldName);
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+            rangeFoldout = hasRange.boolValue;
+        }
 
-            GUILayout.Space(5);
+        private void Display(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var rect = position;
 
-            GUILayout.BeginVertical("box");
+            rect.size = new Vector2(position.width * 0.55f, 18F);
+            EditorGUI.PropertyField(rect, defaultValue, label);
 
-            EditorGUILayout.FloatField(defaultValue);
+            rect.x += rect.width + 20F;
+            rect.width = position.width * 0.2f;
+            EditorGUI.PropertyField(rect, hasRange, new GUIContent("Range?"));
+            rangeFoldout = hasRange.boolValue;
 
-            GUILayout.EndVertical();
+            if (!rangeFoldout) return;
 
-            GUILayout.EndHorizontal();
+            rect.x = position.x + 72F;
+            rect.y = position.y + 20F;
+            rect.size = new Vector2(position.width * 0.25f, 18F);
+            EditorGUI.PropertyField(rect, minValue, GUIContent.none);
+
+            rect.x += rect.width;
+            GUI.Label(rect, " ~ ");
+
+            rect.x += 20F;
+            EditorGUI.PropertyField(rect, maxValue, GUIContent.none);
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+
+            Initialize(property);
+
+            Display(EditorGUI.IndentedRect(position), property, label);
+
+            EditorGUI.EndProperty();
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return rangeFoldout ? 40F : 18F;
         }
     }
 }

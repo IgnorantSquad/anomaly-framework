@@ -19,7 +19,7 @@ namespace Anomaly.Editor
         private int selectedTab = 0;
         private string[] tabs = new string[] {
             "All",
-            "Componets",
+            "Components",
             "Fields"
         };
 
