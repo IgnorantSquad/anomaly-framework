@@ -45,7 +45,7 @@ namespace Anomaly
         }
 
 
-        public T GetComponentData<T>() where T : CustomComponent
+        public T GetComponentData<T>() where T : CustomComponent.BaseData
         {
             if (!componentsData.ContainsKey(typeof(T))) throw new System.Exception("Wrong ComponentData Access");
             return componentsData[typeof(T)] as T;
