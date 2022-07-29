@@ -1,0 +1,16 @@
+{
+    "name": "com.anomaly.framework.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:71fb3643f07138c42a3624fa3616c5d4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
