@@ -1,4 +1,7 @@
-public class NoCoroutineBodyException : System.Exception
+namespace Anomaly.Utils
 {
-    public override string Message => "This instance is body-less coroutine. You cannot reuse it.";
+    public class NoCoroutineBodyException : System.Exception
+    {
+        public override string Message => "This instance is body-less coroutine. You cannot reuse it.";
+    }
 }
