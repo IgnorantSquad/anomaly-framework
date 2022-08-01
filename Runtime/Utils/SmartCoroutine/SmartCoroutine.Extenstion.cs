@@ -1,28 +1,30 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public partial class SmartCoroutine
+namespace Anomaly.Utils
 {
-    public static SmartCoroutine AfterDelay(float delay, System.Action body)
+    public partial class SmartCoroutine
     {
-        return Create(CoInner).Start();
-
-        IEnumerator CoInner()
+        public static SmartCoroutine AfterDelay(float delay, System.Action body)
         {
-            yield return new WaitForSeconds(delay);
-            body?.Invoke();
+            return Create(CoInner).Start();
+
+            IEnumerator CoInner()
+            {
+                yield return new WaitForSeconds(delay);
+                body?.Invoke();
+            }
         }
-    }
 
-    public static SmartCoroutine AfterOneFrame(System.Action body)
-    {
-        return Create(CoInner).Start();
-
-        IEnumerator CoInner()
+        public static SmartCoroutine AfterOneFrame(System.Action body)
         {
-            yield return null;
-            body?.Invoke();
+            return Create(CoInner).Start();
+
+            IEnumerator CoInner()
+            {
+                yield return null;
+                body?.Invoke();
+            }
         }
     }
 }

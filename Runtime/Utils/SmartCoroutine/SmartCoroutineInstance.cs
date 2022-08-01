@@ -1,3 +1,6 @@
 using UnityEngine;
 
-public class SmartCoroutineInstance : MonoBehaviour {}
+namespace Anomaly.Utils
+{
+    public class SmartCoroutineInstance : MonoBehaviour { }
+}

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Anomaly
+namespace Anomaly.Utils
 {
     public class CustomSingletonBehaviour<T> : CustomBehaviour where T : CustomBehaviour
     {
