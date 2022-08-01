@@ -7,10 +7,10 @@ namespace Anomaly.Editor
     using UnityEditor;
     using System.Collections.Generic;
 
-    [CustomEditor(typeof(CustomObject), true)]
-    public class CustomObjectEditor : Editor
+    [CustomEditor(typeof(CustomBehaviour), true)]
+    public class CustomBehaviourEditor : Editor
     {
-        private CustomObject self = null;
+        private CustomBehaviour self = null;
         private Dictionary<string, bool> editorFold = new Dictionary<string, bool>();
 
         private List<System.Reflection.FieldInfo> serializedFields = new List<System.Reflection.FieldInfo>();
@@ -26,18 +26,16 @@ namespace Anomaly.Editor
 
         private void OnEnable()
         {
-            self = target as CustomObject;
-            self.InitializeComponents(target.GetType());
-
+            self = target as CustomBehaviour;
 
             var fields = target.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
             foreach (var field in fields)
             {
-                if (!field.FieldType.IsSubclassOf(typeof(CustomComponent.BaseData)))
-                {
-                    if (Attribute.GetCustomAttribute(field, typeof(HideInInspector)) != null) continue;
-                    if (!field.IsPublic && Attribute.GetCustomAttribute(field, typeof(SerializeField)) == null) continue;
+                if (!field.IsPublic && Attribute.GetCustomAttribute(field, typeof(SerializeField)) == null) continue;
+                if (Attribute.GetCustomAttribute(field, typeof(HideInInspector)) != null) continue;
 
+                if (!field.FieldType.IsSubclassOf(typeof(CustomComponent)))
+                {
                     serializedFields.Add(field);
                     continue;
                 }
@@ -85,16 +83,16 @@ namespace Anomaly.Editor
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
-            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel += 1;
 
             for (int i = 0; i < componentDataList.Count; ++i)
             {
                 EditorGUILayout.BeginVertical("box");
-                SerializeAll(componentDataList[i].FieldType.FullName.Split('+')[0].Replace("Component", ""), componentDataList[i].Name);
+                Serialize(componentDataList[i].Name);
                 EditorGUILayout.EndVertical();
             }
 
-            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel -= 1;
 
             EditorGUILayout.EndVertical();
         }
@@ -105,34 +103,16 @@ namespace Anomaly.Editor
 
             EditorGUIUtility.labelWidth = 70F;
 
+            EditorGUI.indentLevel += 1;
+
             for (int i = 0; i < serializedFields.Count; ++i)
             {
                 Serialize(serializedFields[i].Name);
             }
 
+            EditorGUI.indentLevel -= 1;
+
             EditorGUIUtility.labelWidth = prevWidth;
-        }
-
-        private void SerializeAll(string title, string fieldName)
-        {
-            var serializedProperty = serializedObject.FindProperty(fieldName);
-
-            if (!editorFold.ContainsKey(title)) editorFold.Add(title, true);
-            editorFold[title] = EditorGUILayout.Foldout(editorFold[title], title);
-
-            EditorGUI.indentLevel += 2;
-
-            if (editorFold[title])
-            {
-                var fieldInfo = serializedProperty.serializedObject.targetObject.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-                var fields = fieldInfo.FieldType.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-                foreach (var field in fields)
-                {
-                    EditorGUILayout.PropertyField(serializedProperty.FindPropertyRelative(field.Name), true);
-                }
-            }
-
-            EditorGUI.indentLevel -= 2;
         }
 
         private void Serialize(string fieldName)

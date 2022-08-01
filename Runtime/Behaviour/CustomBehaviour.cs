@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Anomaly
@@ -13,6 +15,7 @@ namespace Anomaly
         protected virtual void Initialize()
         {
             InitializeMagicFunc();
+            InitializeComponents(this.GetType());
         }
 
         public void InitializeMagicFunc()
@@ -45,17 +48,37 @@ namespace Anomaly
 
             method = GetMethod("OnUpdate");
             if (IsValidMagicFunction(method)) manager.RegisterUpdate(this, method.CreateDelegate(typeof(System.Action), this) as System.Action);
-            //if (IsValidMagicFunction(method)) manager.RegisterUpdate(Delegate.CreateDelegate(typeof(System.Action), this, method) as System.Action);
 
             method = GetMethod("OnLateUpdate");
             if (IsValidMagicFunction(method)) manager.RegisterLateUpdate(this, method.CreateDelegate(typeof(System.Action), this) as System.Action);
+        }
 
-            // for (int i = 0; i < methodList.Length; ++i)
-            // {
-            //     var method = GetMethod(methodList[i].Item1);
-            //     if (!IsValidMagicFunction(method)) continue;
-            //     Managers.Update.Register(this, method, methodList[i].Item2);
-            // }
+        public void InitializeComponents(System.Type targetType)
+        {
+            var fields = targetType.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            foreach (var field in fields)
+            {
+                if (!field.FieldType.IsSubclassOf(typeof(CustomComponent))) continue;
+
+                var data = field.GetValue(this);
+
+                var castFixed = data as IFixedUpdater;
+                var castUpdate = data as IUpdater;
+                var castLast = data as ILateUpdater;
+
+                if (castFixed != null)
+                {
+                    Managers.Update.RegisterFixedUpdate(this, castFixed.FixedUpdate);
+                }
+                if (castUpdate != null)
+                {
+                    Managers.Update.RegisterUpdate(this, castUpdate.Update);
+                }
+                if (castLast != null)
+                {
+                    Managers.Update.RegisterLateUpdate(this, castLast.LateUpdate);
+                }
+            }
         }
     }
 }

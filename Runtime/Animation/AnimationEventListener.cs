@@ -19,6 +19,12 @@ namespace Anomaly
 
             animationEvents.Container[function]?.Invoke(param);
         }
+
+
+        // Remove useless initialization
+        protected override void Initialize()
+        {
+        }
     }
 }
 
