@@ -88,7 +88,8 @@ namespace Anomaly.Editor
             for (int i = 0; i < componentDataList.Count; ++i)
             {
                 EditorGUILayout.BeginVertical("box");
-                Serialize(componentDataList[i].Name);
+                var property = Serialize(componentDataList[i].Name);
+                ShowCustomInspector(property, componentDataList[i]);
                 EditorGUILayout.EndVertical();
             }
 
@@ -115,12 +116,21 @@ namespace Anomaly.Editor
             EditorGUIUtility.labelWidth = prevWidth;
         }
 
-        private void Serialize(string fieldName)
+        private SerializedProperty Serialize(string fieldName)
         {
             var serializedProperty = serializedObject.FindProperty(fieldName);
-            if (serializedProperty == null) return;
+            if (serializedProperty == null) return null;
 
             EditorGUILayout.PropertyField(serializedProperty, true);
+            return serializedProperty;
+        }
+
+        private void ShowCustomInspector(SerializedProperty property, System.Reflection.FieldInfo fieldInfo)
+        {
+            if (!property.isExpanded) return;
+
+            var component = fieldInfo.GetValue(target) as CustomComponent;
+            component.OnInspectorGUI(component);
         }
     }
 }
