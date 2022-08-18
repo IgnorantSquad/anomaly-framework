@@ -41,7 +41,7 @@ namespace Anomaly
                     && method.ReturnType == typeof(void);
             }
 
-            var manager = Managers.Update;
+            var manager = UpdateManager.Instance;
 
             var method = GetMethod("OnFixedUpdate");
             if (IsValidMagicFunction(method)) manager.RegisterFixedUpdate(this, method.CreateDelegate(typeof(System.Action), this) as System.Action);
@@ -55,6 +55,8 @@ namespace Anomaly
 
         public void InitializeComponents(System.Type targetType)
         {
+            var manager = UpdateManager.Instance;
+
             var fields = targetType.GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
             foreach (var field in fields)
             {
@@ -62,21 +64,23 @@ namespace Anomaly
 
                 var data = field.GetValue(this);
 
+                (data as CustomComponent).behaviour = this;
+
                 var castFixed = data as IFixedUpdater;
                 var castUpdate = data as IUpdater;
                 var castLast = data as ILateUpdater;
 
                 if (castFixed != null)
                 {
-                    Managers.Update.RegisterFixedUpdate(this, castFixed.FixedUpdate);
+                    manager.RegisterFixedUpdate(this, castFixed.FixedUpdate);
                 }
                 if (castUpdate != null)
                 {
-                    Managers.Update.RegisterUpdate(this, castUpdate.Update);
+                    manager.RegisterUpdate(this, castUpdate.Update);
                 }
                 if (castLast != null)
                 {
-                    Managers.Update.RegisterLateUpdate(this, castLast.LateUpdate);
+                    manager.RegisterLateUpdate(this, castLast.LateUpdate);
                 }
             }
         }
