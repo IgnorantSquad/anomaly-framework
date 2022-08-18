@@ -13,27 +13,20 @@ namespace Anomaly
 
         protected Anomaly.Utils.Stream stream;
 
-        public static U Create<U>(MonoBehaviour mono) where U : EventStream<T>, new()
-        {
-            var es = new U();
-            es.Initialize(mono);
-            return es;
-        }
-
-        public void Initialize(MonoBehaviour mono)
+        public EventStream(MonoBehaviour mono)
         {
             stream = Anomaly.Utils.Stream.Create(mono)
-                        .Select(() => !Messenger.Instance.IsEmpty)
+                        .Select(() => !EventDispatcher.Instance.IsEmpty)
                         .Subscribe(d =>
                         {
-                            for (int i = 0; i < Messenger.Instance.Count; ++i)
+                            for (int i = 0; i < EventDispatcher.Instance.Count; ++i)
                             {
-                                if (!ReferenceEquals(Messenger.Instance.Get(i).receiver, mono)) continue;
+                                if (!ReferenceEquals(EventDispatcher.Instance.Get(i).receiver, mono)) continue;
 
-                                var cast = Messenger.Instance.Get(i) as T;
+                                var cast = EventDispatcher.Instance.Get(i) as T;
                                 if (cast == null) continue;
 
-                                Messenger.Instance.Remove(i);
+                                EventDispatcher.Instance.Remove(i);
 
                                 Notify(cast);
                             }

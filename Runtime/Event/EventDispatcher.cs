@@ -2,12 +2,12 @@ using System.Collections.Generic;
 
 namespace Anomaly
 {
-    public class Messenger
+    public class EventDispatcher
     {
-        private Messenger() { }
+        private EventDispatcher() { }
 
-        private static Messenger instance = null;
-        public static Messenger Instance => instance ?? (instance = new Messenger());
+        private static EventDispatcher instance = null;
+        public static EventDispatcher Instance => instance ?? (instance = new EventDispatcher());
 
         private List<BaseEvent> eventList = new List<BaseEvent>();
         public object eventListLock = new object();
