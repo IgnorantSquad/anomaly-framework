@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Anomaly
 {
-    public class UpdateManager : MonoBehaviour
+    public class UpdateManager : Anomaly.Utils.CustomSingletonBehaviour<UpdateManager>
     {
         private List<(CustomBehaviour target, Action method)> fixedUpdateObjectList = new List<(CustomBehaviour, Action)>();
         private List<(CustomBehaviour target, Action method)> updateObjectList = new List<(CustomBehaviour, Action)>();
