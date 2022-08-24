@@ -1,6 +1,6 @@
 {
   "name": "com.anomaly.framework",
-  "version": "0.0.6",
+  "version": "0.0.7-preview.1",
   "displayName": "Anomaly Framework",
   "description": "Anomaly base framework",
   "unity": "2020.3",
