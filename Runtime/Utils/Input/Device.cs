@@ -25,7 +25,7 @@ namespace Anomaly.Utils
         {
             if (IsKeyboard(key) && IsSupported(Type.Keyboard))
             {
-                return Keyboard.current[(Key)key];
+                return Keyboard.current[(Key)(key ^ KeyboardShift)];
             }
 
             if (IsMouse(key) && IsSupported(Type.Mouse))
