@@ -3,5 +3,8 @@
   "version": "0.0.6",
   "displayName": "Anomaly Framework",
   "description": "Anomaly base framework",
-  "unity": "2020.3"
+  "unity": "2020.3",
+  "dependencies": {
+    "com.unity.inputsystem": "1.2.0"
+  }
 }
