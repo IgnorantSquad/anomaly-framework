@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Anomaly
 {
-    public class CustomBehaviour : MonoBehaviour
+    public class CustomBehaviour : MonoBehaviour, IEventReceiver, IEventSender
     {
         protected virtual void Awake()
         {
@@ -83,6 +83,23 @@ namespace Anomaly
                     manager.RegisterLateUpdate(this, castLast.LateUpdate);
                 }
             }
+        }
+
+        public void HandleReceivedEvent<T>(T e) where T : BaseEvent
+        {
+            e.Invoke();
+            OnEventReceived(e, typeof(T));
+        }
+
+        public void SendEvent<T>(IEventReceiver to, T e) where T : BaseEvent
+        {
+            e.sender = this;
+            e.receiver = to as CustomBehaviour;
+            to.HandleReceivedEvent(e);
+        }
+
+        public virtual void OnEventReceived(BaseEvent e, Type t)
+        {
         }
     }
 }

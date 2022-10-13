@@ -6,5 +6,7 @@ namespace Anomaly
     {
         public CustomBehaviour sender;
         public CustomBehaviour receiver;
+
+        public abstract void Invoke();
     }
 }
