@@ -91,8 +91,9 @@ namespace Anomaly
             OnEventReceived(e, typeof(T));
         }
 
-        public void SendEvent<T>(IEventReceiver to, T e) where T : BaseEvent
+        public void SendEvent<T>(IEventReceiver to, T e = null) where T : BaseEvent, new()
         {
+            if (e == null) e = new T();
             e.sender = this;
             e.receiver = to as CustomBehaviour;
             to.HandleReceivedEvent(e);

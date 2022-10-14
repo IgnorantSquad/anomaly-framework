@@ -1,19 +1,35 @@
-using UnityEngine;
-
 namespace Anomaly
 {
+    using System.Collections;
+    using UnityEngine;
+    using Anomaly.Utils;
+
     public class SceneController : UIController<Scene>
     {
-        public static async void Change(string name, UIEventParam param)
+        public static void Change(string name, UIEventParam param = null)
         {
             Debug.Assert(layoutDictionary.ContainsKey(name));
 
-            await Current.OnExit();
-            Current.gameObject.SetActive(false);
+            SmartCoroutine.Create(CoExecute());
 
-            Current = layoutDictionary[name];
-            Current.gameObject.SetActive(true);
-            await Current.OnEnter(param);
+            IEnumerator CoExecute()
+            {
+                if (Current != null)
+                {
+                    Debug.Log($"{Current.name} exit");
+                    Current.gameObject.SetActive(false);
+                }
+
+                Current = layoutDictionary[name];
+                Current.gameObject.SetActive(true);
+                yield return Current.OnEnter(param);
+            }
+        }
+
+        public static IEnumerator Release()
+        {
+            if (Current == null) yield break;
+            yield return Current.OnExit();
         }
     }
 }

@@ -13,6 +13,6 @@ namespace Anomaly
 
     public interface IEventSender
     {
-        void SendEvent<T>(IEventReceiver to, T e) where T : BaseEvent;
+        void SendEvent<T>(IEventReceiver to, T e = null) where T : BaseEvent, new();
     }
 }

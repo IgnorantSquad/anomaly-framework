@@ -1,8 +1,8 @@
-using System.Threading.Tasks;
-using UnityEngine;
-
 namespace Anomaly
 {
+    using System.Collections;
+    using UnityEngine;
+
     public class UIEventParam
     {
 
@@ -10,7 +10,7 @@ namespace Anomaly
 
     public abstract class UILayout : MonoBehaviour
     {
-        public abstract Task OnEnter(UIEventParam param);
-        public abstract Task OnExit();
+        public abstract IEnumerator OnEnter(UIEventParam param);
+        public abstract IEnumerator OnExit();
     }
 }
