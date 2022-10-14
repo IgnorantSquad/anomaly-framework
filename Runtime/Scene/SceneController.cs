@@ -16,6 +16,7 @@ namespace Anomaly
             {
                 if (Current != null)
                 {
+                    yield return Current.OnExit();
                     Current.gameObject.SetActive(false);
                 }
 
