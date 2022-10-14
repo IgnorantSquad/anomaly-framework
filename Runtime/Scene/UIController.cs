@@ -28,8 +28,6 @@ namespace Anomaly
 
             if (Current == null) return;
 
-            Debug.Log($"{Current.name} scene loaded");
-
             SmartCoroutine.Create(Current.OnEnter(null));
         }
     }
