@@ -4,7 +4,7 @@ namespace Anomaly
     using UnityEngine;
     using Anomaly.Utils;
 
-    public class SceneController : UIController<Scene>
+    public class OverlayController : UIController<Overlay>
     {
         public static void Change(string name, UIEventParam param = null)
         {
