@@ -4,57 +4,84 @@ using UnityEngine;
 
 namespace Anomaly.Utils
 {
-    public class PoolManager
+    public class PoolManager : Anomaly.CustomBehaviour
     {
-        private PoolManager() { }
-        private static PoolManager instance = null;
-        public static PoolManager Instance => (instance ?? (instance = new PoolManager()));
+        public static PoolManager Instance { get; private set; }
+
+        [SerializeField]
+        private PoolRecipe recipe;
 
 
-        Dictionary<string, List<PoolObject>> pool = new Dictionary<string, List<PoolObject>>();
-        Dictionary<string, PoolObject> setting = new Dictionary<string, PoolObject>();
+        private Dictionary<string, Queue<PoolObject>> pool = new Dictionary<string, Queue<PoolObject>>();
 
-        public void Init(params PoolObject[] list)
+
+        protected override void Awake()
         {
-            for (int i = 0; i < list.Length; ++i)
+            if (!ReferenceEquals(Instance, null))
             {
-                if (setting.ContainsKey(list[i].uniqueName) || list[i].uniqueName.Length == 0) continue;
-                setting.Add(list[i].uniqueName, list[i]);
+                Destroy(gameObject);
+                return;
             }
+
+            DontDestroyOnLoad(gameObject);
+            Instance = this;
+
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += (a, b) =>
+            {
+                var keys = pool.Keys;
+                foreach (var key in keys)
+                {
+                    while (pool[key].Count > 0)
+                    {
+                        pool[key].Dequeue();
+                    }
+                }
+            };
         }
 
-        public void Preparing(string name, int count)
+
+        public void WarmUp(string name, int count)
         {
-            Debug.Assert(setting.ContainsKey(name));
-            if (!pool.ContainsKey(name)) pool.Add(name, new List<PoolObject>());
+            var target = recipe.Find(name);
+            if (target == null) return;
+
+            if (!pool.ContainsKey(name))
+            {
+                pool.Add(name, new Queue<PoolObject>());
+            }
+
             for (int i = 0; i < count; ++i)
             {
-                pool[name].Add(Object.Instantiate(setting[name]));
-                pool[name][pool[name].Count - 1].Init();
+                var obj = Instantiate(target.gameObject).GetComponent<PoolObject>();
+                obj.Name = name;
+                obj.Return();
             }
         }
+
 
         public PoolObject Get(string name)
         {
-            if (!pool.ContainsKey(name)) Preparing(name, 1);
-            if (pool[name].Count == 0) Preparing(name, 1);
+            if (!pool.ContainsKey(name))
+            {
+                WarmUp(name, 5);
+            }
 
-            var obj = pool[name][0].Use();
-            pool[name].RemoveAt(0);
+            if (pool[name].Count == 0)
+            {
+                WarmUp(name, 1);
+            }
+
+            var obj = pool[name].Dequeue();
+            obj.CurrentState = PoolObject.State.Using;
+            obj.gameObject.SetActive(true);
             return obj;
         }
 
-        public T Get<T>(string name)
+        public void Add(PoolObject obj)
         {
-            return Get(name).GetComponent<T>();
+            obj.gameObject.SetActive(false);
+            obj.CurrentState = PoolObject.State.Prepare;
+            pool[obj.Name].Enqueue(obj);
         }
-
-        public void Abandon(PoolObject obj)
-        {
-            obj.Abandon();
-            if (!pool.ContainsKey(obj.uniqueName)) Object.Destroy(obj);
-            pool[obj.uniqueName].Add(obj);
-        }
-
     }
 }

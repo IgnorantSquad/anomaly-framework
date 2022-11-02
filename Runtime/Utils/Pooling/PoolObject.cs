@@ -6,36 +6,19 @@ namespace Anomaly.Utils
 {
     public class PoolObject : CustomBehaviour
     {
-
-        public string uniqueName = "";
-
-        public enum EState
+        public enum State
         {
-            PREPARE,
-            USING
-        }
-        public EState state = EState.PREPARE;
-
-        public void Init()
-        {
-            state = EState.PREPARE;
-            gameObject.SetActive(false);
+            Prepare,
+            Using
         }
 
-        public PoolObject Use()
-        {
-            if (state == EState.USING) return null;
-            state = EState.USING;
-            gameObject.SetActive(true);
-            return this;
-        }
+        public State CurrentState { get; set; } = State.Prepare;
 
-        public PoolObject Abandon()
+        public string Name { get; set; }
+
+        public void Return()
         {
-            if (state == EState.PREPARE) return null;
-            state = EState.PREPARE;
-            gameObject.SetActive(false);
-            return this;
+            PoolManager.Instance.Add(this);
         }
 
     }
