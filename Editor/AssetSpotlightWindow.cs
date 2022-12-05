@@ -1,12 +1,9 @@
 #if UNITY_EDITOR
 namespace Anomaly.Editor
 {
-    using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEditor;
-    using System.IO;
-    using UnityEditor.SceneManagement;
 
     public abstract class AssetSpotlightWindow<T> : EditorWindow where T : EditorWindow
     {
@@ -19,9 +16,10 @@ namespace Anomaly.Editor
         private int[] recommendIndices;
         private Vector2 assetListScroll;
 
+        protected abstract List<string>[] options { get; }
 
         protected abstract void InitializeAssetList();
-        protected abstract void SelectAsset(string path);
+        protected abstract void SelectAsset(string path, params string[] options);
 
 
         protected static void ShowWindow()
@@ -91,14 +89,27 @@ namespace Anomaly.Editor
 
         private void SearchRecommend()
         {
+            string input = Preprocess(spotlightInput);
             List<int> indices = new List<int>(assetList.Length);
-            for (int i = 0; i < assetList.Length && !string.IsNullOrEmpty(spotlightInput); ++i)
+            for (int i = 0; i < assetList.Length && !string.IsNullOrEmpty(input); ++i)
             {
-                if (!assetList[i].name.ToLower().Contains(spotlightInput.ToLower())) continue;
+                if (!assetList[i].name.ToLower().Contains(input.ToLower())) continue;
                 indices.Add(i);
             }
 
             recommendIndices = indices.ToArray();
+        }
+
+        private string Preprocess(string input)
+        {
+            for (int i = 0; i < options.Length; ++i)
+            {
+                for (int j = 0; j < options[i].Count; ++j)
+                {
+                    input = input.Replace(options[i][j], "");
+                }
+            }
+            return input.Trim();
         }
 
         private void DisplayRecommend()
@@ -132,10 +143,28 @@ namespace Anomaly.Editor
 
                     if (!GUILayout.Button($"{info.name}\n{info.path}", GUILayout.Width(windowSize.x - (shouldScroll ? 20F : 6F)), GUILayout.Height(45F))) continue;
 
-                    SelectAsset(info.path);
+                    SelectAsset(info.path, FindOptions());
                     return;
                 }
             }
+        }
+
+        private string[] FindOptions()
+        {
+            string input = spotlightInput;
+            List<string> list = new List<string>();
+            for (int i = 0; i < options.Length; ++i)
+            {
+                for (int j = 0; j < options[i].Count; ++j)
+                {
+                    var option = options[i][j];
+                    int index = input.IndexOf(option);
+                    if (index < 0) continue;
+                    list.Add(option);
+                    input = input.Remove(index, option.Length);
+                }
+            }
+            return list.ToArray();
         }
 
         private void HandleKeyboardEvent(string currentSelectedPath)
@@ -148,9 +177,15 @@ namespace Anomaly.Editor
                 return;
             }
 
+            if (e.keyCode == KeyCode.Tab && recommendIndices.Length > 0)
+            {
+                spotlightInput = assetList[recommendIndices[0]].name;
+                return;
+            }
+
             if (e.keyCode != KeyCode.Return) return;
 
-            if (string.IsNullOrEmpty(spotlightInput))
+            if (string.IsNullOrEmpty(Preprocess(spotlightInput)))
             {
                 window.Close();
                 return;
@@ -158,7 +193,7 @@ namespace Anomaly.Editor
 
             if (string.IsNullOrEmpty(currentSelectedPath)) return;
 
-            SelectAsset(currentSelectedPath);
+            SelectAsset(currentSelectedPath, FindOptions());
         }
     }
 }
