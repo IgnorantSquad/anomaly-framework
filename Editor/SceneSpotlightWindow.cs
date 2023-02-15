@@ -6,7 +6,7 @@ namespace Anomaly.Editor
     using UnityEditor;
     using UnityEditor.SceneManagement;
 
-    public class SceneSpotlightWindow : AssetSpotlightWindow<SceneSpotlightWindow>
+    public class ASceneSpotlightWindow : AAssetSpotlightWindow<ASceneSpotlightWindow>
     {
         protected override List<string>[] options => new List<string>[] {
             new List<string> { "#show", "#s", "--s" },

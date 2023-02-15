@@ -4,7 +4,7 @@ namespace Anomaly.Utils
     using UnityEditor;
     using UnityEngine;
 
-    public abstract class SerializableDictionaryDrawer : PropertyDrawer
+    public abstract class ASerializableDictionaryDrawer : PropertyDrawer
     {
         private SerializedProperty keyList, valueList;
         private int dictionarySize = 0;
@@ -123,8 +123,8 @@ namespace Anomaly.Utils
         }
     }
 
-    [CustomPropertyDrawer(typeof(SerializableDictionary<AnimationEventCallback>))]
-    public class SerializableDictionaryEventDrawer : SerializableDictionaryDrawer
+    [CustomPropertyDrawer(typeof(ASerializableDictionary<AAnimationEventCallback>))]
+    public class SerializableDictionaryEventDrawer : ASerializableDictionaryDrawer
     {
         protected override string KeyLabel => "Function";
         protected override string ValueLabel => string.Empty;
@@ -132,11 +132,11 @@ namespace Anomaly.Utils
         protected override float Margin => 110F;
     }
 
-    [CustomPropertyDrawer(typeof(SerializableDictionary<int>))]
-    [CustomPropertyDrawer(typeof(SerializableDictionary<float>))]
-    [CustomPropertyDrawer(typeof(SerializableDictionary<bool>))]
-    [CustomPropertyDrawer(typeof(SerializableDictionary<string>))]
-    public partial class SerializableDictionaryValueDrawer : SerializableDictionaryDrawer
+    [CustomPropertyDrawer(typeof(ASerializableDictionary<int>))]
+    [CustomPropertyDrawer(typeof(ASerializableDictionary<float>))]
+    [CustomPropertyDrawer(typeof(ASerializableDictionary<bool>))]
+    [CustomPropertyDrawer(typeof(ASerializableDictionary<string>))]
+    public partial class SerializableDictionaryValueDrawer : ASerializableDictionaryDrawer
     {
         protected override float Margin => 38F;
     }

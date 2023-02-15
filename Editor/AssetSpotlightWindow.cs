@@ -5,7 +5,7 @@ namespace Anomaly.Editor
     using UnityEngine;
     using UnityEditor;
 
-    public abstract class AssetSpotlightWindow<T> : EditorWindow where T : EditorWindow
+    public abstract class AAssetSpotlightWindow<T> : EditorWindow where T : EditorWindow
     {
         protected static EditorWindow window;
         protected static Vector2 drawableSize;

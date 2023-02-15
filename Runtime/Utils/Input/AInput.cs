@@ -4,17 +4,17 @@ namespace Anomaly.Utils
     {
         public static bool IsPressed(AKeyCode key)
         {
-            return Device.GetButton((int)key).wasPressedThisFrame;
+            return ADevice.GetButton((int)key).wasPressedThisFrame;
         }
 
         public static bool IsHeld(AKeyCode key)
         {
-            return Device.GetButton((int)key).isPressed;
+            return ADevice.GetButton((int)key).isPressed;
         }
 
         public static bool IsReleased(AKeyCode key)
         {
-            return Device.GetButton((int)key).wasReleasedThisFrame;
+            return ADevice.GetButton((int)key).wasReleasedThisFrame;
         }
     }
 }

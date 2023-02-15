@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace Anomaly.Editor
 {
-    public static class EditorUtils
+    public static class AEditorUtils
     {
         public static void Label(string text, int fontSize = 12, FontStyle fontStyle = FontStyle.Normal)
         {

@@ -7,10 +7,10 @@ namespace Anomaly.Editor
     using UnityEditor;
     using System.Collections.Generic;
 
-    [CustomEditor(typeof(CustomBehaviour), true)]
-    public class CustomBehaviourEditor : Editor
+    [CustomEditor(typeof(ABehaviour), true)]
+    public class ABehaviourEditor : Editor
     {
-        private CustomBehaviour self = null;
+        private ABehaviour self = null;
         private Dictionary<string, bool> editorFold = new Dictionary<string, bool>();
 
         private List<System.Reflection.FieldInfo> serializedFields = new List<System.Reflection.FieldInfo>();
@@ -26,7 +26,7 @@ namespace Anomaly.Editor
 
         private void OnEnable()
         {
-            self = target as CustomBehaviour;
+            self = target as ABehaviour;
 
             var fields = target.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
             foreach (var field in fields)
@@ -34,7 +34,7 @@ namespace Anomaly.Editor
                 if (!field.IsPublic && Attribute.GetCustomAttribute(field, typeof(SerializeField)) == null) continue;
                 if (Attribute.GetCustomAttribute(field, typeof(HideInInspector)) != null) continue;
 
-                if (!field.FieldType.IsSubclassOf(typeof(CustomComponent)))
+                if (!field.FieldType.IsSubclassOf(typeof(AComponent)))
                 {
                     serializedFields.Add(field);
                     continue;
@@ -58,7 +58,7 @@ namespace Anomaly.Editor
                 case 0:
                     ShowComponentTab();
                     GUILayout.Space(10);
-                    EditorUtils.DrawHorizontalLine(Color.gray);
+                    AEditorUtils.DrawHorizontalLine(Color.gray);
                     GUILayout.Space(20);
                     ShowBaseTab();
                     break;
@@ -79,7 +79,7 @@ namespace Anomaly.Editor
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            EditorUtils.Label("Component Data", 16, FontStyle.Bold);
+            AEditorUtils.Label("Component Data", 16, FontStyle.Bold);
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
@@ -129,7 +129,7 @@ namespace Anomaly.Editor
         {
             if (!property.isExpanded) return;
 
-            var component = fieldInfo.GetValue(target) as CustomComponent;
+            var component = fieldInfo.GetValue(target) as AComponent;
             component.OnInspectorGUI(component);
         }
     }

@@ -4,8 +4,8 @@ namespace Anomaly.Utils
     using UnityEditor;
     using UnityEngine;
 
-    [CustomPropertyDrawer(typeof(FlexibleValue))]
-    public class FlexibleValueDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(AFlexibleValue))]
+    public class AFlexibleValueDrawer : PropertyDrawer
     {
         private SerializedProperty defaultValue, hasRange, minValue, maxValue;
 
