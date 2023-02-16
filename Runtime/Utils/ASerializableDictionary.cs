@@ -20,7 +20,8 @@ namespace Anomaly.Utils
 
         public _Typ Get(string key)
         {
-            Debug.Assert(Container.TryGetValue(key, out var value));
+            _Typ value = default(_Typ);
+            Debug.Assert(Container.TryGetValue(key, out value));
             return value;
         }
 
