@@ -58,7 +58,8 @@ namespace Anomaly
                     current = parent.next;
                 }
 
-                current.method.Invoke();
+                current.target.OnFixedUpdate();
+                if (current.method != null) current.method.Invoke();
 
                 parent = current;
                 current = current.next;
@@ -87,7 +88,8 @@ namespace Anomaly
                     current = parent.next;
                 }
 
-                current.method.Invoke();
+                current.target.OnUpdate();
+                if (current.method != null) current.method.Invoke();
 
                 parent = current;
                 current = current.next;
@@ -116,7 +118,8 @@ namespace Anomaly
                     current = parent.next;
                 }
 
-                current.method.Invoke();
+                current.target.OnLateUpdate();
+                if (current.method != null) current.method.Invoke();
 
                 parent = current;
                 current = current.next;

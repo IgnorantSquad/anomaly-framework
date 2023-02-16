@@ -13,15 +13,13 @@ namespace Anomaly
 
         protected virtual void OnEnable()
         {
-            if (onFixedUpdate.method != null) AUpdateManager.Instance.RegisterFixedUpdate(onFixedUpdate);
-            if (onUpdate.method != null) AUpdateManager.Instance.RegisterUpdate(onUpdate);
-            if (onLateUpdate.method != null) AUpdateManager.Instance.RegisterLateUpdate(onLateUpdate);
+            if (onFixedUpdate.target != null) AUpdateManager.Instance.RegisterFixedUpdate(onFixedUpdate);
+            if (onUpdate.target != null) AUpdateManager.Instance.RegisterUpdate(onUpdate);
+            if (onLateUpdate.target != null) AUpdateManager.Instance.RegisterLateUpdate(onLateUpdate);
         }
 
         protected virtual void Awake()
         {
-            onFixedUpdate.target = onUpdate.target = onLateUpdate.target = this;
-
             Initialize();
         }
 
@@ -39,18 +37,18 @@ namespace Anomaly
             var manager = AUpdateManager.Instance;
 
             MethodInfo method = FindMethod(classType, "OnFixedUpdate", methodFlag);
-            if (IsValidMagicFunction(method)) onFixedUpdate.method = method.CreateDelegate(typeof(System.Action), this) as System.Action;
+            if (method != null) onFixedUpdate.target = this;
 
             method = FindMethod(classType, "OnUpdate", methodFlag);
-            if (IsValidMagicFunction(method)) onUpdate.method = method.CreateDelegate(typeof(System.Action), this) as System.Action;
+            if (method != null) onUpdate.target = this;
 
             method = FindMethod(classType, "OnLateUpdate", methodFlag);
-            if (IsValidMagicFunction(method)) onLateUpdate.method = method.CreateDelegate(typeof(System.Action), this) as System.Action;
+            if (method != null) onLateUpdate.target = this;
 
 
             IEnumerable<Type> GetTypeRecursively(Type t)
             {
-                while (t != typeof(System.Object))
+                while (t != typeof(ABehaviour))
                 {
                     yield return t;
                     t = t.BaseType;
@@ -63,21 +61,13 @@ namespace Anomaly
                 foreach (Type current in search)
                 {
                     var info = current.GetMethod(name, flag);
-                    if (info != null) return info;
+                    if (info == null) continue;
+                    if (info.IsAbstract) continue;
+                    if (info.DeclaringType != current) continue;
+                    return info;
                 }
 
                 return null;
-            }
-
-            bool IsValidMagicFunction(MethodInfo method)
-            {
-                if (method == null) return false;
-                if (method.ReturnType != typeof(void)) return false;
-
-                var param = method.GetParameters();
-                if (param != null && param.Length != 0) return false;
-
-                return true;
             }
 
             bool IsValidEventFunction(MethodInfo method)
@@ -130,6 +120,10 @@ namespace Anomaly
                 }
             }
         }
+
+        public virtual void OnFixedUpdate() { }
+        public virtual void OnUpdate() { }
+        public virtual void OnLateUpdate() { }
 
 
         public void HandleReceivedEvent<T>(T e) where T : AEvent
