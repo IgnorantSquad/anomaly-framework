@@ -1,61 +1,126 @@
-﻿using System.Collections.Generic;
-using System;
-using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Anomaly
 {
     public class AUpdateManager : Anomaly.Utils.ASingletonBehaviour<AUpdateManager>
     {
-        private List<(ABehaviour target, Action method)> fixedUpdateObjectList = new List<(ABehaviour, Action)>();
-        private List<(ABehaviour target, Action method)> updateObjectList = new List<(ABehaviour, Action)>();
-        private List<(ABehaviour target, Action method)> lateUpdateObjectList = new List<(ABehaviour, Action)>();
+        public class Data
+        {
+            public ABehaviour target;
+            public Action method;
+            public Data next = null;
+        }
 
-        public void RegisterFixedUpdate(ABehaviour target, System.Action action)
+        private Data fixedUpdateObjects = null;
+        private Data updateObjects = null;
+        private Data lateUpdateObjects = null;
+
+
+        public void RegisterFixedUpdate(Data data)
         {
-            fixedUpdateObjectList.Add((target, action));
+            data.next = fixedUpdateObjects;
+            fixedUpdateObjects = data;
         }
-        public void RegisterUpdate(ABehaviour target, System.Action action)
+
+        public void RegisterUpdate(Data data)
         {
-            updateObjectList.Add((target, action));
+            data.next = updateObjects;
+            updateObjects = data;
         }
-        public void RegisterLateUpdate(ABehaviour target, System.Action action)
+
+        public void RegisterLateUpdate(Data data)
         {
-            lateUpdateObjectList.Add((target, action));
+            data.next = lateUpdateObjects;
+            lateUpdateObjects = data;
         }
 
 
         void FixedUpdate()
         {
-            UpdateLoop(fixedUpdateObjectList);
+            Data parent = null;
+            var current = fixedUpdateObjects;
+
+            while (current != null)
+            {
+                if (current.target == null || !current.target.gameObject.activeInHierarchy)
+                {
+                    if (parent == null)
+                    {
+                        fixedUpdateObjects = current.next;
+                        current.next = null;
+                        current = fixedUpdateObjects;
+                        continue;
+                    }
+
+                    parent.next = current.next;
+                    current.next = null;
+                    current = parent.next;
+                }
+
+                current.method.Invoke();
+
+                parent = current;
+                current = current.next;
+            }
         }
 
         void Update()
         {
-            UpdateLoop(updateObjectList);
+            Data parent = null;
+            var current = updateObjects;
+
+            while (current != null)
+            {
+                if (current.target == null || !current.target.gameObject.activeInHierarchy)
+                {
+                    if (parent == null)
+                    {
+                        updateObjects = current.next;
+                        current.next = null;
+                        current = updateObjects;
+                        continue;
+                    }
+
+                    parent.next = current.next;
+                    current.next = null;
+                    current = parent.next;
+                }
+
+                current.method.Invoke();
+
+                parent = current;
+                current = current.next;
+            }
         }
 
         void LateUpdate()
         {
-            UpdateLoop(lateUpdateObjectList);
-        }
+            Data parent = null;
+            var current = lateUpdateObjects;
 
-        private void UpdateLoop(List<(ABehaviour target, System.Action method)> list)
-        {
-            for (int i = 0; i < list.Count; ++i)
+            while (current != null)
             {
-                var current = list[i];
-                if (current.target == null)
+                if (current.target == null || !current.target.gameObject.activeInHierarchy)
                 {
-                    list.RemoveAt(i);
-                    continue;
+                    if (parent == null)
+                    {
+                        lateUpdateObjects = current.next;
+                        current.next = null;
+                        current = lateUpdateObjects;
+                        continue;
+                    }
+
+                    parent.next = current.next;
+                    current.next = null;
+                    current = parent.next;
                 }
-                if (!current.target.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
+
                 current.method.Invoke();
+
+                parent = current;
+                current = current.next;
             }
         }
     }
-
 }

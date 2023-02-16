@@ -7,8 +7,21 @@ namespace Anomaly
 {
     public class ABehaviour : MonoBehaviour, AIEventReceiver, AIEventSender
     {
+        private AUpdateManager.Data onFixedUpdate = new AUpdateManager.Data();
+        private AUpdateManager.Data onUpdate = new AUpdateManager.Data();
+        private AUpdateManager.Data onLateUpdate = new AUpdateManager.Data();
+
+        protected virtual void OnEnable()
+        {
+            if (onFixedUpdate.method != null) AUpdateManager.Instance.RegisterFixedUpdate(onFixedUpdate);
+            if (onUpdate.method != null) AUpdateManager.Instance.RegisterUpdate(onUpdate);
+            if (onLateUpdate.method != null) AUpdateManager.Instance.RegisterLateUpdate(onLateUpdate);
+        }
+
         protected virtual void Awake()
         {
+            onFixedUpdate.target = onUpdate.target = onLateUpdate.target = this;
+
             Initialize();
         }
 
@@ -20,37 +33,65 @@ namespace Anomaly
 
         public void InitializeMagicFunc()
         {
-            MethodInfo GetMethod(string methodName)
-            {
-                var type = GetType();
-
-                while (type != typeof(System.Object))
-                {
-                    MethodInfo info = GetType()
-                        .GetMethod(methodName,
-                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-                    if (info != null) return info;
-                    type = type.BaseType;
-                }
-                return null;
-            }
-            bool IsValidMagicFunction(MethodInfo method)
-            {
-                return method != null
-                    && method.GetParameters().Length == 0
-                    && method.ReturnType == typeof(void);
-            }
+            Type classType = GetType();
+            BindingFlags methodFlag = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
 
             var manager = AUpdateManager.Instance;
 
-            var method = GetMethod("OnFixedUpdate");
-            if (IsValidMagicFunction(method)) manager.RegisterFixedUpdate(this, method.CreateDelegate(typeof(System.Action), this) as System.Action);
+            MethodInfo method = FindMethod(classType, "OnFixedUpdate", methodFlag);
+            if (IsValidMagicFunction(method)) onFixedUpdate.method = method.CreateDelegate(typeof(System.Action), this) as System.Action;
 
-            method = GetMethod("OnUpdate");
-            if (IsValidMagicFunction(method)) manager.RegisterUpdate(this, method.CreateDelegate(typeof(System.Action), this) as System.Action);
+            method = FindMethod(classType, "OnUpdate", methodFlag);
+            if (IsValidMagicFunction(method)) onUpdate.method = method.CreateDelegate(typeof(System.Action), this) as System.Action;
 
-            method = GetMethod("OnLateUpdate");
-            if (IsValidMagicFunction(method)) manager.RegisterLateUpdate(this, method.CreateDelegate(typeof(System.Action), this) as System.Action);
+            method = FindMethod(classType, "OnLateUpdate", methodFlag);
+            if (IsValidMagicFunction(method)) onLateUpdate.method = method.CreateDelegate(typeof(System.Action), this) as System.Action;
+
+
+            IEnumerable<Type> GetTypeRecursively(Type t)
+            {
+                while (t != typeof(System.Object))
+                {
+                    yield return t;
+                    t = t.BaseType;
+                }
+            }
+
+            MethodInfo FindMethod(Type t, string name, BindingFlags flag)
+            {
+                var search = GetTypeRecursively(t);
+                foreach (Type current in search)
+                {
+                    var info = current.GetMethod(name, flag);
+                    if (info != null) return info;
+                }
+
+                return null;
+            }
+
+            bool IsValidMagicFunction(MethodInfo method)
+            {
+                if (method == null) return false;
+                if (method.ReturnType != typeof(void)) return false;
+
+                var param = method.GetParameters();
+                if (param != null && param.Length != 0) return false;
+
+                return true;
+            }
+
+            bool IsValidEventFunction(MethodInfo method)
+            {
+                if (method == null) return false;
+                if (method.ReturnType != typeof(void)) return false;
+
+                var param = method.GetParameters();
+                if (param == null || param.Length != 1) return false;
+
+                if (!param[0].ParameterType.IsSubclassOf(typeof(AEvent))) return false;
+
+                return true;
+            }
         }
 
         public void InitializeComponents(System.Type targetType)
@@ -68,19 +109,24 @@ namespace Anomaly
 
                 var castFixed = data as AIFixedUpdater;
                 var castUpdate = data as AIUpdater;
-                var castLast = data as AILateUpdater;
+                var castLate = data as AILateUpdater;
+
+                int id = GetInstanceID();
 
                 if (castFixed != null)
                 {
-                    manager.RegisterFixedUpdate(this, castFixed.FixedUpdate);
+                    if (onFixedUpdate.method == null) onFixedUpdate.method = castFixed.FixedUpdate;
+                    else onFixedUpdate.method += castFixed.FixedUpdate;
                 }
                 if (castUpdate != null)
                 {
-                    manager.RegisterUpdate(this, castUpdate.Update);
+                    if (onUpdate.method == null) onUpdate.method = castUpdate.Update;
+                    else onUpdate.method += castUpdate.Update;
                 }
-                if (castLast != null)
+                if (castLate != null)
                 {
-                    manager.RegisterLateUpdate(this, castLast.LateUpdate);
+                    if (onLateUpdate.method == null) onLateUpdate.method = castLate.LateUpdate;
+                    else onLateUpdate.method += castLate.LateUpdate;
                 }
             }
         }
