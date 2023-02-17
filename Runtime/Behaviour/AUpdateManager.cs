@@ -43,7 +43,7 @@ namespace Anomaly
 
             while (current != null)
             {
-                if (current.target == null || !current.target.gameObject.activeInHierarchy)
+                if (current.target == null || !current.target.gameObject.activeInHierarchy || !current.target.enabled)
                 {
                     if (parent == null)
                     {
@@ -73,7 +73,7 @@ namespace Anomaly
 
             while (current != null)
             {
-                if (current.target == null || !current.target.gameObject.activeInHierarchy)
+                if (current.target == null || !current.target.gameObject.activeInHierarchy || !current.target.enabled)
                 {
                     if (parent == null)
                     {
@@ -103,7 +103,7 @@ namespace Anomaly
 
             while (current != null)
             {
-                if (current.target == null || !current.target.gameObject.activeInHierarchy)
+                if (current.target == null || !current.target.gameObject.activeInHierarchy || !current.target.enabled)
                 {
                     if (parent == null)
                     {
